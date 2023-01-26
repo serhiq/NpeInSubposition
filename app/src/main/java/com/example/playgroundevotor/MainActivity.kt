@@ -4,8 +4,12 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import ru.evotor.framework.receipt.Measure
-import ru.evotor.framework.receipt.Position
+import ru.evotor.framework.core.IntegrationManagerCallback
+import ru.evotor.framework.core.IntegrationManagerFuture
+import ru.evotor.framework.core.action.command.open_receipt_command.OpenSellReceiptCommand
+import ru.evotor.framework.core.action.event.receipt.changes.position.PositionAdd
+import ru.evotor.framework.navigation.NavigationApi
+import ru.evotor.framework.receipt.*
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.*
@@ -22,56 +26,49 @@ class MainActivity : AppCompatActivity() {
 
         textView = findViewById<Button>(R.id.textView)
 
-        findViewById<Button>(R.id.button).setOnClickListener {
+        findViewById<Button>(R.id.createPosition).setOnClickListener {
+            createPositionFree()
+       }
+    }
+
+    private fun createPositionFree() {
+        val changes = positionAdds()
+        OpenSellReceiptCommand(changes, null, null).process(this, IntegrationManagerCallback { integrationManagerFuture ->
             try {
-                printSubPositions(requireNotNull(createPositionWithSubPosition()))
+                val result = integrationManagerFuture.result
+                if (IntegrationManagerFuture.Result.Type.ERROR == result.type) {
+                    displayLogOnTextView("Ошибка формирования чека: " + result.error.message + ". Код: " + result.error.code)
+                    return@IntegrationManagerCallback
+                }
+
+                if (true) {
+                    val intent = NavigationApi.createIntentForSellReceiptPayment()
+                    startActivityForResult(intent, 1)
+                } else {
+                    startActivity(NavigationApi.createIntentForSellReceiptEdit())
+                }
+
             } catch (e: Exception) {
                 displayLogOnTextView("Exception: ${e.localizedMessage}")
-                Jenny.v(e.localizedMessage)
+                Jenny.e(e)
             }
-        }
+        })
     }
 
-    private fun createPositionWithSubPosition(): Position? {
-        val subPositions = listOf<Position>(
-            Position.Builder.newInstance(
-                UUID.randomUUID().toString(),
-                null,
-                "Субпозиция",
-                Measure("дроб", 3, 255),
-                BigDecimal.ONE,
-                BigDecimal.TEN
-            ).build()
-        )
-
-        return Position.Builder.newInstance(
+    private fun positionAdds(): List<PositionAdd> {
+        val position = Position.Builder.newInstance(
             UUID.randomUUID().toString(),
             null,
-            "Позиция c субпозициями",
-            Measure("дроб", 3, 255),
-            BigDecimal.ONE,
-            BigDecimal.TEN
-        ).setSubPositions(subPositions).build()
-    }
-
-    private fun createPosition(): Position {
-        return Position.Builder.newInstance(
-            UUID.randomUUID().toString(),
-            null,
-            "Позиция",
-            Measure("дроб", 3, 255),
-            BigDecimal.ONE,
-            BigDecimal.TEN
+            "Позиция по свободной цене",
+            Measure(
+                "шт",
+                3,
+                0
+            ),
+            BigDecimal.TEN,
+            BigDecimal.ONE
         ).build()
-    }
-
-    private fun printSubPositions (position: Position) {
-
-        logPosition(position)
-
-        position.subPositions.forEach{ p ->
-            printSubPositions(p)
-        }
+        return listOf(PositionAdd(position))
     }
 
     private fun displayLogOnTextView(s: String?) {
@@ -79,16 +76,5 @@ class MainActivity : AppCompatActivity() {
         val oldText = textView.text
         val date = iso8601Formatter.format(Date())
         textView.text = "$oldText \n $date  ${s} "
-
-    }
-
-    private fun logPosition(position: Position) {
-        Jenny.v("печатаем позицию: " + position.name)
-        Jenny.vvv(position)
-        val haveSubPositions = position.subPositions?.size.toString() ?: "nil"
-        Jenny.v("есть субпозиции: $haveSubPositions")
-
-        /////////////////////
-        displayLogOnTextView("${position.name}\nsubPositions size $haveSubPositions\n-------------\n")
     }
 }

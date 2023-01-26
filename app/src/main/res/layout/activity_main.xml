@@ -16,7 +16,7 @@
         tools:text="@tools:sample/lorem/random" />
 
     <Button
-        android:id="@+id/button"
+        android:id="@+id/createPosition"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="start" />
