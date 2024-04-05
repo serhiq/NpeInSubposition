@@ -16,15 +16,13 @@
             android:id="@+id/textView"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:paddingLeft="16dp"
-            android:paddingTop="8dp"
-            android:paddingRight="16dp"
+            android:padding="16dp"
             tools:text="@tools:sample/lorem/random" />
     </ScrollView>
 
     <Button
-        android:id="@+id/apply_btn"
-        android:layout_width="match_parent"
+        android:id="@+id/buttonClose"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Start" />
+        android:text="Закрыть" />
 </LinearLayout>

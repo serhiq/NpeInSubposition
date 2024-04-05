@@ -1,8 +1,9 @@
-package com.example.playgroundevotor
+package com.example.playgroundevotor.receivers
 
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
+import com.example.playgroundevotor.services.ReceiptClosedService
 import ru.evotor.framework.core.action.event.receipt.receipt_edited.ReceiptClosedEvent
 
 class EventsReceiver : BroadcastReceiver() {
@@ -13,8 +14,7 @@ class EventsReceiver : BroadcastReceiver() {
             if (ReceiptClosedEvent.BROADCAST_ACTION_SELL_RECEIPT_CLOSED == action) {
                 ReceiptClosedService.start(context, intent.extras ?: return)
             }
-        } catch (e: Exception) {
-            Jenny.e(e)
+        } catch (ignored: Exception) {
         }
     }
 }
