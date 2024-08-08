@@ -4,13 +4,8 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.Button
 import android.widget.TextView
-import ru.evotor.framework.core.IntegrationManagerCallback
-import ru.evotor.framework.core.IntegrationManagerFuture
-import ru.evotor.framework.core.action.command.open_receipt_command.OpenSellReceiptCommand
-import ru.evotor.framework.core.action.event.receipt.changes.position.PositionAdd
-import ru.evotor.framework.navigation.NavigationApi
-import ru.evotor.framework.receipt.*
-import java.math.BigDecimal
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -26,49 +21,45 @@ class MainActivity : AppCompatActivity() {
 
         textView = findViewById<Button>(R.id.textView)
 
-        findViewById<Button>(R.id.createPosition).setOnClickListener {
-            createPositionFree()
-       }
-    }
+        findViewById<Button>(R.id.start).setOnClickListener {
+            lifecycleScope.launch {
+                runAllRequests()
 
-    private fun createPositionFree() {
-        val changes = positionAdds()
-        OpenSellReceiptCommand(changes, null, null).process(this, IntegrationManagerCallback { integrationManagerFuture ->
-            try {
-                val result = integrationManagerFuture.result
-                if (IntegrationManagerFuture.Result.Type.ERROR == result.type) {
-                    displayLogOnTextView("Ошибка формирования чека: " + result.error.message + ". Код: " + result.error.code)
-                    return@IntegrationManagerCallback
-                }
-
-                if (true) {
-                    val intent = NavigationApi.createIntentForSellReceiptPayment()
-                    startActivityForResult(intent, 1)
-                } else {
-                    startActivity(NavigationApi.createIntentForSellReceiptEdit())
-                }
-
-            } catch (e: Exception) {
-                displayLogOnTextView("Exception: ${e.localizedMessage}")
-                Jenny.e(e)
             }
-        })
+        }
+//
+//        findViewById<Button>(R.id.open_chuncker).setOnClickListener {
+//            startActivity(Chucker.getLaunchIntent(this))
+//        }
     }
 
-    private fun positionAdds(): List<PositionAdd> {
-        val position = Position.Builder.newInstance(
-            UUID.randomUUID().toString(),
-            null,
-            "Позиция по свободной цене",
-            Measure(
-                "шт",
-                3,
-                0
-            ),
-            BigDecimal.TEN,
-            BigDecimal.ONE
-        ).build()
-        return listOf(PositionAdd(position))
+    private suspend fun runAllRequests() {
+
+        try {
+            val apiUrl = "[enter your server]/queue/"
+            val requestBody = (ChangeQueueStateRequest(ChangeQueueStateRequest.RemoteQueue(QueueState.pending)))
+            val response = ServerAPI.API.changeQueueState(apiUrl, requestBody)
+            displayLogOnTextView("1. response code: ${response.code()}")
+        } catch (e: Exception) {
+            displayLogOnTextView("1. exception: ${e.localizedMessage}")
+        }
+
+        try {
+            val apiUrlWithContent = "[enter_your_server]/queue/content"
+            val requestBody = ChangeQueueStateRequest(ChangeQueueStateRequest.RemoteQueue(QueueState.pending))
+            val response = ServerAPI.API.changeQueueStateWithContent(apiUrlWithContent, requestBody)
+            displayLogOnTextView("2. response code: ${response.code()}")
+        } catch (e: Exception) {
+            displayLogOnTextView("2. exception: ${e.localizedMessage}")
+        }
+
+        try {
+            val greetUrl = "[enter_your server]/greet"
+            val response = ServerAPI.API.greet(greetUrl)
+            displayLogOnTextView("3. response code: ${response.code()}")
+        } catch (e: Exception) {
+            displayLogOnTextView("3. exception: ${e.localizedMessage}")
+        }
     }
 
     private fun displayLogOnTextView(s: String?) {

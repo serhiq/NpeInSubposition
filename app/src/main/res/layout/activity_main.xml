@@ -16,8 +16,14 @@
         tools:text="@tools:sample/lorem/random" />
 
     <Button
-        android:id="@+id/createPosition"
+        android:id="@+id/start"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="start" />
+
+<!--    <Button-->
+<!--        android:id="@+id/open_chuncker"-->
+<!--        android:layout_width="wrap_content"-->
+<!--        android:layout_height="wrap_content"-->
+<!--        android:text="open_chuncker" />-->
 </LinearLayout>
