@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Example</string>
+    <string name="app_uuid" translatable="false">enter_your_uuid</string>
 </resources>

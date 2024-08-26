@@ -3,19 +3,13 @@ package com.example.playgroundevotor
 import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.example.playgroundevotor.databinding.ActivityMainBinding
 import com.example.playgroundevotor.data.Prefs
-import org.json.JSONObject
+import com.example.playgroundevotor.databinding.ActivityPuchaserBinding
 import ru.evotor.framework.component.PaymentPerformer
 import ru.evotor.framework.core.IntegrationManagerCallback
 import ru.evotor.framework.core.IntegrationManagerFuture
-import ru.evotor.framework.core.action.command.open_receipt_command.OpenSellReceiptCommand
-import ru.evotor.framework.core.action.command.print_receipt_command.PrintPaybackReceiptCommand
 import ru.evotor.framework.core.action.command.print_receipt_command.PrintReceiptCommandResult
 import ru.evotor.framework.core.action.command.print_receipt_command.PrintSellReceiptCommand
-import ru.evotor.framework.core.action.event.receipt.changes.position.PositionAdd
-import ru.evotor.framework.core.action.event.receipt.changes.receipt.SetExtra
-import ru.evotor.framework.navigation.NavigationApi
 import ru.evotor.framework.payment.PaymentSystem
 import ru.evotor.framework.payment.PaymentType
 import ru.evotor.framework.receipt.DocumentType
@@ -27,29 +21,39 @@ import ru.evotor.framework.receipt.Purchaser
 import ru.evotor.framework.receipt.PurchaserType
 import ru.evotor.framework.receipt.Receipt
 import java.math.BigDecimal
+import java.util.Calendar
 import java.util.Date
 import java.util.HashMap
 import java.util.UUID
 
-class MainActivity : AppCompatActivity() {
+class PurchaserActivity : AppCompatActivity() {
 
     private val prefs by lazy { Prefs(applicationContext) }
 
-    private lateinit var binding: ActivityMainBinding
+    private lateinit var binding: ActivityPuchaserBinding
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        binding = ActivityMainBinding.inflate(layoutInflater)
+        binding = ActivityPuchaserBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
         title = "Тестовое приложение для Evotor"
-        binding.applyBtn.setOnClickListener { sellPrint() }
+
+        val purchser1 = Purchaser(
+            name = "Авдеев",
+            documentNumber = "4507 747384",
+            type = PurchaserType.NATURAL_PERSON,
+            birthDate = createBirthDate(),
+            innNumber = null,
+            documentType = DocumentType.PASSPORT_RF
+        )
+
+        binding.testCase1.setOnClickListener { sellPrint(purchser1, 1) }
     }
 
-
-    private fun sellPrint() {
+    private fun sellPrint(purchaser: Purchaser, i: Int) {
         try {
-            val printReceipt = createExampleReceipt()
+            val printReceipt = createExampleReceipt(purchaser)
 
             val callback = IntegrationManagerCallback { future ->
                 try {
@@ -66,11 +70,11 @@ class MainActivity : AppCompatActivity() {
                             notifyUser("Закройте смену")
 
                         } else {
-                            notifyUser(error.message)
+                            notifyUser("$i. "+ error.message)
                         }
                     }
                 } catch (e: Exception) {
-                    notifyUser(e.localizedMessage)
+                    notifyUser("$i. "+ e.localizedMessage)
                 }
             }
 
@@ -84,31 +88,7 @@ class MainActivity : AppCompatActivity() {
 
     }
 
-    private fun createExampleReceipt(): Receipt.PrintReceipt {
-
-//         val purchaser = Purchaser(
-//            name = "name",
-//            innNumber = null,
-//
-//            birthDate = Date(),
-//            documentType = DocumentType.PASSPORT_RF,
-//            documentNumber = "0000129321",
-//            type = PurchaserType.NATURAL_PERSON
-//
-//        )
-
-        val purchaser = Purchaser(
-            name = "Частное лицо",
-            innNumber = null,
-
-            birthDate = Date().apply {
-                time = -111600000
-            },
-            documentType = DocumentType.PASSPORT_RF,
-            documentNumber = "0000123456",
-            type = PurchaserType.NATURAL_PERSON
-
-        )
+    private fun createExampleReceipt(purchaser: Purchaser): Receipt.PrintReceipt {
 
         val positions = positions()
         val printGroup = PrintGroup(UUID.randomUUID().toString(),
@@ -129,32 +109,11 @@ class MainActivity : AppCompatActivity() {
             val paymentSystem = PaymentSystem( PaymentType.CASH, "Интернет-платеж", context.packageName)
             payments[Payment(UUID.randomUUID().toString(),
                 total, null,
-                PaymentPerformer(paymentSystem, context.packageName, MainActivity::class.java.name, context.getString(R.string.app_uuid), context.getString(R.string.app_name)), null, null,
+                PaymentPerformer(paymentSystem, context.packageName, PurchaserActivity::class.java.name, context.getString(R.string.app_uuid), context.getString(R.string.app_name)), null, null,
                 UUID.randomUUID().toString())] = total
 
         return payments
     }
-
-
-//    private fun start() {
-//
-//        val changes = positions()
-//        OpenSellReceiptCommand(changes, null, null).process(this, IntegrationManagerCallback { integrationManagerFuture ->
-//            try {
-//                val result = integrationManagerFuture.result
-//                if (IntegrationManagerFuture.Result.Type.ERROR == result.type) {
-//                    notifyUser("Ошибка формирования чека: " + result.error.message + ". Код: " + result.error.code)
-//                    return@IntegrationManagerCallback
-//                }
-//
-//                val intent = NavigationApi.createIntentForSellReceiptPayment()
-//                startActivityForResult(intent, 1)
-//
-//            } catch (e: Exception) {
-//                notifyUser("Exception: ${e.localizedMessage}")
-//            }
-//        })
-//    }
 
     private fun positions(): List<Position> {
         val position = Position.Builder.newInstance(
@@ -179,5 +138,11 @@ class MainActivity : AppCompatActivity() {
 
     private fun notifyUser(msg: String) {
         binding.textView.text = binding.textView.text.toString() + "\n\n" + msg
+    }
+
+    private fun createBirthDate(): Date {
+        val calendar = Calendar.getInstance()
+        calendar.set(1980, Calendar.JANUARY, 1)
+        return calendar.time
     }
 }
