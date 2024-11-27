@@ -24,8 +24,8 @@
         android:theme="@style/Theme.Example"
         tools:targetApi="31">
         <meta-data
-            android:name="app_uuid"
-            android:value="*******" />
+            android:name="***"
+            android:value="***" />
 
         <activity
             android:name=".MainActivity"
