@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import com.example.playgroundevotor.databinding.ActivityMainBinding
 import com.example.playgroundevotor.data.Prefs
+import com.example.playgroundevotor.utils.PositionService
 import ru.evotor.framework.core.IntegrationManagerCallback
 import ru.evotor.framework.core.IntegrationManagerFuture
 import ru.evotor.framework.core.action.command.open_receipt_command.OpenSellReceiptCommand
@@ -11,6 +12,7 @@ import ru.evotor.framework.core.action.event.receipt.changes.position.PositionAd
 import ru.evotor.framework.navigation.NavigationApi
 import ru.evotor.framework.receipt.Measure
 import ru.evotor.framework.receipt.Position
+import ru.evotor.framework.receipt.TaxNumber
 import java.math.BigDecimal
 import java.util.UUID
 
@@ -26,11 +28,11 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
 
         title = "Тестовое приложение для Evotor"
-        binding.applyBtn.setOnClickListener { start() }
+        binding.applyBtn.setOnClickListener { start(positions()) }
+        binding.exampleFromEvoBtn.setOnClickListener { start(PositionService.positions()) }
     }
 
-    private fun start() {
-        val changes = positions()
+    private fun start(changes: MutableList<PositionAdd>) {
         OpenSellReceiptCommand(changes, null, null).process(this, IntegrationManagerCallback { integrationManagerFuture ->
             try {
                 val result = integrationManagerFuture.result
@@ -48,7 +50,7 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun positions(): List<PositionAdd> {
+    private fun positions(): MutableList<PositionAdd> {
         val position = Position.Builder.newInstance(
             UUID.randomUUID().toString(),
             null,
@@ -78,8 +80,9 @@ class MainActivity : AppCompatActivity() {
         position.setSubPositions(mutableListOf(subPosition))
 
 
-        return listOf(PositionAdd(position.build()))
+        return mutableListOf(PositionAdd(position.build()))
     }
+
     override fun onResume() {
         super.onResume()
         binding.textView.text = prefs.logs
