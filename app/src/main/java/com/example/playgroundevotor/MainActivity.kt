@@ -60,8 +60,25 @@ class MainActivity : AppCompatActivity() {
             ),
             BigDecimal.TEN,
             BigDecimal.ONE
+        )
+
+        val subPosition = Position.Builder.newInstance(
+            UUID.randomUUID().toString(),
+            null,
+            "Горный мох",
+            Measure(
+                "л",
+                3,
+                41
+            ),
+            BigDecimal.TEN,
+            BigDecimal.TEN
         ).build()
-        return listOf(PositionAdd(position))
+
+        position.setSubPositions(mutableListOf(subPosition))
+
+
+        return listOf(PositionAdd(position.build()))
     }
     override fun onResume() {
         super.onResume()
