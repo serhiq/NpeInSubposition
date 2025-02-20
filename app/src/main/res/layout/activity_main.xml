@@ -28,10 +28,4 @@
         android:layout_height="wrap_content"
         android:text="Start" />
 
-    <Button
-        android:id="@+id/example_from_evo_btn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="example_from_evo" />
-
 </LinearLayout>
