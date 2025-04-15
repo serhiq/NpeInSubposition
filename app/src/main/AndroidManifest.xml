@@ -72,8 +72,20 @@
                 android:value="#E91E63" />
             <intent-filter>
                 <action android:name="evo.v2.receipt.sell.receiptDiscount" />
+                <action android:name="evo.v2.receipt.correction.income.receiptDiscount" />
+                <action android:name="evo.v2.receipt.correction.return.income.receiptDiscount" />
             </intent-filter>
         </service>
+
+        <receiver
+            android:name=".receivers.IncomeReceiptBroadcastReceiver"
+            android:enabled="true"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="evotor.intent.action.receipt.correction.income.OPENED" />
+                <action android:name="evotor.intent.action.receipt.correction.income.RECEIPT_CLOSED" />
+            </intent-filter>
+        </receiver>
 
         <activity
             android:name=".ShowReceiptActivity"

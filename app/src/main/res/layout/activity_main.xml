@@ -21,10 +21,4 @@
             android:paddingRight="16dp"
             tools:text="@tools:sample/lorem/random" />
     </ScrollView>
-
-    <Button
-        android:id="@+id/apply_btn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Start" />
 </LinearLayout>
