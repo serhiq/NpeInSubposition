@@ -21,4 +21,11 @@
             android:paddingRight="16dp"
             tools:text="@tools:sample/lorem/random" />
     </ScrollView>
+
+    <Button
+        android:id="@+id/printReceiptButton"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:text="Печать чека коррекции" />
 </LinearLayout>
