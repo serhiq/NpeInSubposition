@@ -39,7 +39,7 @@ class MainActivity : AppCompatActivity() {
                         return@IntegrationManagerCallback
                     }
 
-                    val intent = NavigationApi.createIntentForSellReceiptPayment()
+                    val intent = NavigationApi.createIntentForSellReceiptPayment(context = this)
                     startActivityForResult(intent, REQUEST_CODE_SELL_PAYMENT)
 
                 } catch (e: Exception) {

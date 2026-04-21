@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <ScrollView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:fillViewport="true">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:id="@+id/headerTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@string/terminal_checks_header"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Headline5" />
+
+            <TextView
+                android:id="@+id/headerSubtitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:text="@string/terminal_checks_subtitle"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+
+            <com.google.android.material.textfield.TextInputLayout
+                android:id="@+id/emailInputLayout"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="16dp"
+                android:hint="@string/terminal_checks_email_hint"
+                app:endIconMode="clear_text">
+
+                <com.google.android.material.textfield.TextInputEditText
+                    android:id="@+id/emailInputEditText"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:inputType="textEmailAddress"
+                    android:maxLines="1" />
+            </com.google.android.material.textfield.TextInputLayout>
+
+            <Button
+                android:id="@+id/printSellReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:text="@string/terminal_checks_print_sell_receipt_button" />
+
+            <Button
+                android:id="@+id/printPaybackReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_print_payback_receipt_button" />
+
+            <Button
+                android:id="@+id/printBuyReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_print_buy_receipt_button" />
+
+            <Button
+                android:id="@+id/printBuybackReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_print_buyback_receipt_button" />
+
+            <Button
+                android:id="@+id/openSellReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_open_sell_receipt_button" />
+
+            <Button
+                android:id="@+id/openPaybackReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_open_payback_receipt_button" />
+
+            <Button
+                android:id="@+id/openBuyReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_open_buy_receipt_button" />
+
+            <Button
+                android:id="@+id/openBuybackReceiptButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_open_buyback_receipt_button" />
+
+            <Button
+                android:id="@+id/summaryLogsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_summary_logs_button" />
+
+            <Button
+                android:id="@+id/shortLogButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_short_log_button" />
+
+            <Button
+                android:id="@+id/clearLogsButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="12dp"
+                android:text="@string/terminal_checks_clear_logs_button" />
+
+            <TextView
+                android:id="@+id/statusTitle"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="24dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Subtitle1"
+                android:textStyle="bold" />
+
+            <TextView
+                android:id="@+id/statusMessage"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:paddingBottom="24dp"
+                android:textAppearance="@style/TextAppearance.MaterialComponents.Body1" />
+        </LinearLayout>
+    </ScrollView>
+
+    <androidx.fragment.app.FragmentContainerView
+        android:id="@+id/result_container"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:visibility="gone" />
+
+</FrameLayout>
