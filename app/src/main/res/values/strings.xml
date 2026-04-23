@@ -1,20 +1,16 @@
 <resources>
-    <string name="app_name">Example</string>
-    <string name="terminal_checks_title">New Internet Receipt SDK</string>
-    <string name="terminal_checks_header">Проверка new internet receipt API</string>
-    <string name="terminal_checks_subtitle">Ручные сценарии только для новой схемы SDK. Каждый сценарий отправляет internet-признак через команду Evotor и пишет readback закрытого чека в логи.</string>
-    <string name="terminal_checks_email_hint">E-mail для internet receipt сценариев</string>
+    <string name="app_name">Deprecated Internet Receipt Test</string>
+    <string name="terminal_checks_title">Deprecated Internet Receipt PrintGroup</string>
+    <string name="terminal_checks_header">Проверка deprecated internet receipt API</string>
+    <string name="terminal_checks_subtitle">Ручные сценарии только для deprecated print path. Каждый сценарий ставит internet-признак через PrintGroup.receiptFromInternet и пишет readback закрытого чека в логи.</string>
+    <string name="terminal_checks_email_hint">E-mail для deprecated print сценариев</string>
     <string name="terminal_checks_print_sell_receipt_button">1. PrintSellReceipt</string>
     <string name="terminal_checks_print_payback_receipt_button">2. PrintPaybackReceipt</string>
     <string name="terminal_checks_print_buy_receipt_button">3. PrintBuyReceipt</string>
     <string name="terminal_checks_print_buyback_receipt_button">4. PrintBuybackReceipt</string>
-    <string name="terminal_checks_open_sell_receipt_button">5. OpenSellReceipt</string>
-    <string name="terminal_checks_open_payback_receipt_button">6. OpenPaybackReceipt</string>
-    <string name="terminal_checks_open_buy_receipt_button">7. OpenBuyReceipt</string>
-    <string name="terminal_checks_open_buyback_receipt_button">8. OpenBuybackReceipt</string>
-    <string name="terminal_checks_summary_logs_button">9. Итоговые логи</string>
-    <string name="terminal_checks_short_log_button">10. short_log</string>
-    <string name="terminal_checks_clear_logs_button">11. Сбросить логи</string>
+    <string name="terminal_checks_summary_logs_button">5. Итоговые логи</string>
+    <string name="terminal_checks_short_log_button">6. short_log</string>
+    <string name="terminal_checks_clear_logs_button">7. Сбросить логи</string>
     <string name="terminal_checks_idle_title">Готово к запуску</string>
     <string name="terminal_checks_idle_message">Выбери сценарий и проверь поведение терминала. Детали ответа SDK будут открыты поверх текущего экрана.</string>
     <string name="terminal_checks_running_title">Выполняется сценарий</string>
@@ -26,4 +22,6 @@
     <string name="terminal_checks_result_success">%1$s: успех</string>
     <string name="terminal_checks_result_error">%1$s: ошибка</string>
     <string name="terminal_checks_close_result">Закрыть</string>
+    <string name="crash_report_title">Debug crash report</string>
+    <string name="crash_report_close">Закрыть приложение</string>
 </resources>

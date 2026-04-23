@@ -14,23 +14,16 @@ import ru.evotor.framework.component.PaymentPerformer
 import ru.evotor.framework.component.PaymentPerformerApi
 import ru.evotor.framework.core.IntegrationManagerFuture
 import ru.evotor.framework.core.IntegrationManagerImpl
-import ru.evotor.framework.core.action.command.open_receipt_command.OpenBuyReceiptCommand
-import ru.evotor.framework.core.action.command.open_receipt_command.OpenBuybackReceiptCommand
-import ru.evotor.framework.core.action.command.open_receipt_command.OpenPaybackReceiptCommand
-import ru.evotor.framework.core.action.command.open_receipt_command.OpenSellReceiptCommand
 import ru.evotor.framework.core.action.command.print_receipt_command.PrintBuyReceiptCommand
 import ru.evotor.framework.core.action.command.print_receipt_command.PrintBuybackReceiptCommand
 import ru.evotor.framework.core.action.command.print_receipt_command.PrintPaybackReceiptCommand
 import ru.evotor.framework.core.action.command.print_receipt_command.PrintSellReceiptCommand
 import ru.evotor.framework.core.action.event.receipt.changes.receipt.SetExtra
-import ru.evotor.framework.core.action.event.receipt.changes.receipt.SetInternetRequisites
-import ru.evotor.framework.core.action.event.receipt.changes.receipt.SetPurchaserContactData
-import ru.evotor.framework.navigation.NavigationApi
 import ru.evotor.framework.payment.PaymentType
 import ru.evotor.framework.receipt.Payment
+import ru.evotor.framework.receipt.Position
 import ru.evotor.framework.receipt.PrintGroup
 import ru.evotor.framework.receipt.Receipt
-import ru.evotor.framework.receipt.Position
 import java.math.BigDecimal
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -81,18 +74,6 @@ class TerminalChecksActivity : AppCompatActivity() {
         binding.printBuybackReceiptButton.setOnClickListener {
             runPrintScenario(Scenario.PRINT_BUYBACK_RECEIPT)
         }
-        binding.openSellReceiptButton.setOnClickListener {
-            runOpenScenario(Scenario.OPEN_SELL_RECEIPT)
-        }
-        binding.openPaybackReceiptButton.setOnClickListener {
-            runOpenScenario(Scenario.OPEN_PAYBACK_RECEIPT)
-        }
-        binding.openBuyReceiptButton.setOnClickListener {
-            runOpenScenario(Scenario.OPEN_BUY_RECEIPT)
-        }
-        binding.openBuybackReceiptButton.setOnClickListener {
-            runOpenScenario(Scenario.OPEN_BUYBACK_RECEIPT)
-        }
         binding.summaryLogsButton.setOnClickListener {
             showLogsSummary()
         }
@@ -110,84 +91,16 @@ class TerminalChecksActivity : AppCompatActivity() {
         }
     }
 
-    private fun runOpenScenario(scenario: Scenario) {
-        runScenario(scenario) {
-            val email = configuredEmail()
-            val changes = PositionService.positions(scenario.itemName)
-            val contacts = SetPurchaserContactData.createForEmail(email)
-            val internetRequisites = SetInternetRequisites(true, scenario.paymentPlace)
-            resetTestOptions(scenario = scenario, email = email)
-
-            when (scenario) {
-                Scenario.OPEN_SELL_RECEIPT -> {
-                    if (!ensureActionAvailable(scenario, OpenSellReceiptCommand.NAME, "Открытие SELL чека недоступно на этом устройстве.")) {
-                        return@runScenario
-                    }
-                    OpenSellReceiptCommand(changes, scenarioExtra(scenario), contacts, internetRequisites).process(this) { future ->
-                        handleIntegrationResult(
-                            scenario = scenario,
-                            future = future,
-                            successMessage = buildOpenSuccessDetails(scenario, email, changes.size),
-                            onSuccess = { openReceiptPaymentScreen(scenario) }
-                        )
-                    }
-                }
-
-                Scenario.OPEN_PAYBACK_RECEIPT -> {
-                    if (!ensureActionAvailable(scenario, OpenPaybackReceiptCommand.NAME, "Открытие PAYBACK чека недоступно на этом устройстве.")) {
-                        return@runScenario
-                    }
-                    OpenPaybackReceiptCommand(changes, scenarioExtra(scenario), contacts, null, internetRequisites).process(this) { future ->
-                        handleIntegrationResult(
-                            scenario = scenario,
-                            future = future,
-                            successMessage = buildOpenSuccessDetails(scenario, email, changes.size),
-                            onSuccess = { openReceiptPaymentScreen(scenario) }
-                        )
-                    }
-                }
-
-                Scenario.OPEN_BUY_RECEIPT -> {
-                    if (!ensureActionAvailable(scenario, OpenBuyReceiptCommand.NAME, "Открытие BUY чека недоступно на этом устройстве.")) {
-                        return@runScenario
-                    }
-                    OpenBuyReceiptCommand(changes, scenarioExtra(scenario), contacts, internetRequisites).process(this) { future ->
-                        handleIntegrationResult(
-                            scenario = scenario,
-                            future = future,
-                            successMessage = buildOpenSuccessDetails(scenario, email, changes.size),
-                            onSuccess = { openReceiptPaymentScreen(scenario) }
-                        )
-                    }
-                }
-
-                Scenario.OPEN_BUYBACK_RECEIPT -> {
-                    if (!ensureActionAvailable(scenario, OpenBuybackReceiptCommand.NAME, "Открытие BUYBACK чека недоступно на этом устройстве.")) {
-                        return@runScenario
-                    }
-                    OpenBuybackReceiptCommand(changes, scenarioExtra(scenario), contacts, internetRequisites).process(this) { future ->
-                        handleIntegrationResult(
-                            scenario = scenario,
-                            future = future,
-                            successMessage = buildOpenSuccessDetails(scenario, email, changes.size),
-                            onSuccess = { openReceiptPaymentScreen(scenario) }
-                        )
-                    }
-                }
-
-                else -> error("Unexpected scenario for open runner: $scenario")
-            }
-        }
-    }
-
     private fun runPrintScenario(scenario: Scenario) {
         runScenario(scenario) {
             val email = configuredEmail()
             val positions = PositionService.receiptPositions(scenario.itemName)
             val paymentPerformer = defaultCashPaymentPerformer()
             val payments = listOf(createPayment(positions, paymentPerformer))
-            val printReceipt = buildPrintReceipt(positions, payments)
+            val deprecatedPrintGroup = buildDeprecatedPrintGroup()
+            val printReceipt = buildPrintReceipt(deprecatedPrintGroup, positions, payments)
             resetTestOptions(scenario = scenario, email = email)
+            appendDeprecatedFlagLog(scenario, deprecatedPrintGroup)
 
             when (scenario) {
                 Scenario.PRINT_SELL_RECEIPT -> {
@@ -202,13 +115,19 @@ class TerminalChecksActivity : AppCompatActivity() {
                         BigDecimal.ZERO,
                         scenario.paymentAddress,
                         scenario.paymentPlace,
-                        null,
-                        true
+                        null
                     ).process(this) { future ->
                         handleIntegrationResult(
                             scenario = scenario,
                             future = future,
-                            successMessage = buildPrintSuccessDetails(scenario, paymentPerformer, positions.size, payments.first().value, email)
+                            successMessage = buildPrintSuccessDetails(
+                                scenario = scenario,
+                                paymentPerformer = paymentPerformer,
+                                positionsCount = positions.size,
+                                total = payments.first().value,
+                                email = email,
+                                printGroup = deprecatedPrintGroup
+                            )
                         )
                     }
                 }
@@ -226,13 +145,19 @@ class TerminalChecksActivity : AppCompatActivity() {
                         null,
                         scenario.paymentAddress,
                         scenario.paymentPlace,
-                        null,
-                        true
+                        null
                     ).process(this) { future ->
                         handleIntegrationResult(
                             scenario = scenario,
                             future = future,
-                            successMessage = buildPrintSuccessDetails(scenario, paymentPerformer, positions.size, payments.first().value, email)
+                            successMessage = buildPrintSuccessDetails(
+                                scenario = scenario,
+                                paymentPerformer = paymentPerformer,
+                                positionsCount = positions.size,
+                                total = payments.first().value,
+                                email = email,
+                                printGroup = deprecatedPrintGroup
+                            )
                         )
                     }
                 }
@@ -249,13 +174,19 @@ class TerminalChecksActivity : AppCompatActivity() {
                         BigDecimal.ZERO,
                         scenario.paymentAddress,
                         scenario.paymentPlace,
-                        null,
-                        true
+                        null
                     ).process(this) { future ->
                         handleIntegrationResult(
                             scenario = scenario,
                             future = future,
-                            successMessage = buildPrintSuccessDetails(scenario, paymentPerformer, positions.size, payments.first().value, email)
+                            successMessage = buildPrintSuccessDetails(
+                                scenario = scenario,
+                                paymentPerformer = paymentPerformer,
+                                positionsCount = positions.size,
+                                total = payments.first().value,
+                                email = email,
+                                printGroup = deprecatedPrintGroup
+                            )
                         )
                     }
                 }
@@ -272,18 +203,22 @@ class TerminalChecksActivity : AppCompatActivity() {
                         BigDecimal.ZERO,
                         scenario.paymentAddress,
                         scenario.paymentPlace,
-                        null,
-                        true
+                        null
                     ).process(this) { future ->
                         handleIntegrationResult(
                             scenario = scenario,
                             future = future,
-                            successMessage = buildPrintSuccessDetails(scenario, paymentPerformer, positions.size, payments.first().value, email)
+                            successMessage = buildPrintSuccessDetails(
+                                scenario = scenario,
+                                paymentPerformer = paymentPerformer,
+                                positionsCount = positions.size,
+                                total = payments.first().value,
+                                email = email,
+                                printGroup = deprecatedPrintGroup
+                            )
                         )
                     }
                 }
-
-                else -> error("Unexpected scenario for print runner: $scenario")
             }
         }
     }
@@ -344,8 +279,7 @@ class TerminalChecksActivity : AppCompatActivity() {
     private fun handleIntegrationResult(
         scenario: Scenario,
         future: IntegrationManagerFuture,
-        successMessage: String,
-        onSuccess: (() -> Unit)? = null
+        successMessage: String
     ) {
         try {
             val result = future.result
@@ -361,11 +295,7 @@ class TerminalChecksActivity : AppCompatActivity() {
                 return
             }
 
-            if (onSuccess != null) {
-                onSuccess()
-            } else {
-                renderSuccess(scenario, successMessage)
-            }
+            renderSuccess(scenario, successMessage)
         } catch (throwable: Throwable) {
             renderError(
                 scenario = scenario,
@@ -376,19 +306,6 @@ class TerminalChecksActivity : AppCompatActivity() {
                 }
             )
         }
-    }
-
-    private fun openReceiptPaymentScreen(scenario: Scenario) {
-        val intent = when (scenario) {
-            Scenario.OPEN_SELL_RECEIPT -> NavigationApi.createIntentForSellReceiptPayment(context = this)
-            Scenario.OPEN_PAYBACK_RECEIPT -> NavigationApi.createIntentForPaybackReceiptPayment(context = this)
-            Scenario.OPEN_BUY_RECEIPT -> NavigationApi.createIntentForBuyReceiptPayment(context = this)
-            Scenario.OPEN_BUYBACK_RECEIPT -> NavigationApi.createIntentForBuybackReceiptPayment(context = this)
-            else -> error("Unexpected scenario for payment screen: $scenario")
-        }
-        renderIdleState()
-        appendLogEntry("${scenario.label}: открываю экран оплаты Evotor UI")
-        startActivityForResult(intent, REQUEST_CODE_OPEN_RECEIPT_PAYMENT)
     }
 
     private fun defaultCashPaymentPerformer(): PaymentPerformer {
@@ -415,22 +332,31 @@ class TerminalChecksActivity : AppCompatActivity() {
         )
     }
 
+    private fun buildDeprecatedPrintGroup(): PrintGroup {
+        // Deprecated API under investigation for support case.
+        // Ожидаемое поведение: receiptFromInternet = true
+        // Фактическое поведение: (оставить место для заполнения)
+        return PrintGroup(
+            UUID.randomUUID().toString(),
+            PrintGroup.Type.CASH_RECEIPT,
+            null,
+            null,
+            null,
+            null,
+            true,
+            null,
+            null,
+            true
+        )
+    }
+
     private fun buildPrintReceipt(
+        printGroup: PrintGroup,
         positions: List<Position>,
         payments: List<Payment>
     ): Receipt.PrintReceipt {
         return Receipt.PrintReceipt(
-            PrintGroup(
-                UUID.randomUUID().toString(),
-                PrintGroup.Type.CASH_RECEIPT,
-                null,
-                null,
-                null,
-                null,
-                true,
-                null,
-                null
-            ),
+            printGroup,
             positions,
             payments.associate { it to it.value },
             calculateChanges(positions, payments),
@@ -463,24 +389,35 @@ class TerminalChecksActivity : AppCompatActivity() {
             .put("expectedPaymentAddress", scenario.paymentAddress)
             .put("expectedInternet", true)
             .put("checkPaymentAddress", scenario.checkPaymentAddress)
+            .put("mechanism", "deprecated_print_group")
             .put("timestamp", System.currentTimeMillis())
             .put("packageName", packageName)
         return SetExtra(payload)
     }
 
-    private fun buildOpenSuccessDetails(
-        scenario: Scenario,
-        email: String,
-        positionsCount: Int
-    ): String {
+    private fun appendDeprecatedFlagLog(scenario: Scenario, printGroup: PrintGroup) {
+        appendLogEntry(
+            buildString {
+                appendLine("${scenario.label}: используется deprecated API")
+                appendLine("Установка internet-признака: PrintGroup.receiptFromInternet=true")
+                appendLine("Параметры PrintGroup:")
+                append(describePrintGroup(printGroup))
+            }
+        )
+    }
+
+    private fun describePrintGroup(printGroup: PrintGroup): String {
         return buildString {
-            appendLine("Сценарий: ${scenario.label}")
-            appendLine("Позиций: $positionsCount")
-            appendLine("Email: $email")
-            appendLine("Команда: ${scenario.commandName}")
-            appendLine("Товар: ${scenario.itemName}")
-            appendLine("SetInternetRequisites(receiptFromInternet=true, paymentPlace=${scenario.paymentPlace})")
-            append("Команда открытия чека отправлена. После закрытия чека readback попадет в логи.")
+            appendLine("identifier=${printGroup.identifier}")
+            appendLine("type=${printGroup.type}")
+            appendLine("orgName=${printGroup.orgName}")
+            appendLine("orgInn=${printGroup.orgInn}")
+            appendLine("orgAddress=${printGroup.orgAddress}")
+            appendLine("taxationSystem=${printGroup.taxationSystem}")
+            appendLine("shouldPrintReceipt=${printGroup.isShouldPrintReceipt}")
+            appendLine("purchaser=${printGroup.purchaser}")
+            appendLine("medicineAttribute=${printGroup.medicineAttribute}")
+            append("receiptFromInternet=${printGroup.isReceiptFromInternet}")
         }
     }
 
@@ -489,7 +426,8 @@ class TerminalChecksActivity : AppCompatActivity() {
         paymentPerformer: PaymentPerformer,
         positionsCount: Int,
         total: BigDecimal,
-        email: String
+        email: String,
+        printGroup: PrintGroup
     ): String {
         return buildString {
             appendLine("Сценарий: ${scenario.label}")
@@ -499,10 +437,13 @@ class TerminalChecksActivity : AppCompatActivity() {
             appendLine("Email: $email")
             appendLine("Товар: ${scenario.itemName}")
             appendLine("Команда: ${scenario.commandName}")
-            appendLine("receiptFromInternet=true")
+            appendLine("deprecated API: PrintGroup.receiptFromInternet=true")
             appendLine("paymentPlace=${scenario.paymentPlace}")
             appendLine("paymentAddress=${scenario.paymentAddress}")
-            append("Команда печати отправлена. После закрытия чека readback попадет в логи.")
+            appendLine("Ожидаемое поведение: receiptFromInternet = true")
+            appendLine("Фактическое поведение: (смотрите readback в логах после закрытия чека)")
+            appendLine("Параметры PrintGroup:")
+            append(describePrintGroup(printGroup))
         }
     }
 
@@ -547,10 +488,6 @@ class TerminalChecksActivity : AppCompatActivity() {
         binding.printPaybackReceiptButton.isEnabled = enabled
         binding.printBuyReceiptButton.isEnabled = enabled
         binding.printBuybackReceiptButton.isEnabled = enabled
-        binding.openSellReceiptButton.isEnabled = enabled
-        binding.openPaybackReceiptButton.isEnabled = enabled
-        binding.openBuyReceiptButton.isEnabled = enabled
-        binding.openBuybackReceiptButton.isEnabled = enabled
         binding.summaryLogsButton.isEnabled = enabled
         binding.shortLogButton.isEnabled = enabled
         binding.clearLogsButton.isEnabled = enabled
@@ -609,6 +546,9 @@ class TerminalChecksActivity : AppCompatActivity() {
             appendLine("Package: $packageName")
             appendLine("Version: ${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})")
             appendLine()
+            appendLine("Режим")
+            appendLine("Только deprecated print path")
+            appendLine()
             appendLine("Evotor компоненты")
             for (appInfo in terminalAppsInfo()) {
                 appendLine("${appInfo.name}: ${installedVersion(appInfo.packageName) ?: "не установлено"}")
@@ -634,7 +574,7 @@ class TerminalChecksActivity : AppCompatActivity() {
     private fun buildShortLogReport(): String {
         val shortResults = readScenarioResults()
         return buildString {
-            appendLine("Короткий итог по сценариям")
+            appendLine("Короткий итог по deprecated print-сценариям")
             appendLine()
             for (scenario in TEST_SCENARIOS) {
                 val result = shortResults.optString(scenario.code).ifBlank { "NOT RUN" }
@@ -700,7 +640,7 @@ class TerminalChecksActivity : AppCompatActivity() {
             "print_sell_receipt",
             "PrintSellReceipt",
             "SELL",
-            "SELL PrintSellReceipt internet happy",
+            "SELL PrintSellReceipt deprecated internet happy",
             "SELL PrintSellReceipt payment place",
             "SELL PrintSellReceipt payment address",
             true
@@ -710,7 +650,7 @@ class TerminalChecksActivity : AppCompatActivity() {
             "print_payback_receipt",
             "PrintPaybackReceipt",
             "PAYBACK",
-            "PAYBACK PrintPaybackReceipt internet happy",
+            "PAYBACK PrintPaybackReceipt deprecated internet happy",
             "PAYBACK PrintPaybackReceipt payment place",
             "PAYBACK PrintPaybackReceipt payment address",
             true
@@ -720,7 +660,7 @@ class TerminalChecksActivity : AppCompatActivity() {
             "print_buy_receipt",
             "PrintBuyReceipt",
             "BUY",
-            "BUY PrintBuyReceipt internet happy",
+            "BUY PrintBuyReceipt deprecated internet happy",
             "BUY PrintBuyReceipt payment place",
             "BUY PrintBuyReceipt payment address",
             true
@@ -730,50 +670,10 @@ class TerminalChecksActivity : AppCompatActivity() {
             "print_buyback_receipt",
             "PrintBuybackReceipt",
             "BUYBACK",
-            "BUYBACK PrintBuybackReceipt internet happy",
+            "BUYBACK PrintBuybackReceipt deprecated internet happy",
             "BUYBACK PrintBuybackReceipt payment place",
             "BUYBACK PrintBuybackReceipt payment address",
             true
-        ),
-        OPEN_SELL_RECEIPT(
-            5,
-            "open_sell_receipt",
-            "OpenSellReceipt",
-            "SELL",
-            "SELL OpenSellReceipt internet happy",
-            "SELL OpenSellReceipt payment place",
-            "SELL OpenSellReceipt payment address",
-            false
-        ),
-        OPEN_PAYBACK_RECEIPT(
-            6,
-            "open_payback_receipt",
-            "OpenPaybackReceipt",
-            "PAYBACK",
-            "PAYBACK OpenPaybackReceipt internet happy",
-            "PAYBACK OpenPaybackReceipt payment place",
-            "PAYBACK OpenPaybackReceipt payment address",
-            false
-        ),
-        OPEN_BUY_RECEIPT(
-            7,
-            "open_buy_receipt",
-            "OpenBuyReceipt",
-            "BUY",
-            "BUY OpenBuyReceipt internet happy",
-            "BUY OpenBuyReceipt payment place",
-            "BUY OpenBuyReceipt payment address",
-            false
-        ),
-        OPEN_BUYBACK_RECEIPT(
-            8,
-            "open_buyback_receipt",
-            "OpenBuybackReceipt",
-            "BUYBACK",
-            "BUYBACK OpenBuybackReceipt internet happy",
-            "BUYBACK OpenBuybackReceipt payment place",
-            "BUYBACK OpenBuybackReceipt payment address",
-            false
         );
 
         val label: String
@@ -782,25 +682,20 @@ class TerminalChecksActivity : AppCompatActivity() {
 
     companion object {
         private const val DEFAULT_EMAIL = "example@gmail.com"
-        private const val REQUEST_CODE_OPEN_RECEIPT_PAYMENT = 1001
         private val TEST_SCENARIOS = listOf(
             Scenario.PRINT_SELL_RECEIPT,
             Scenario.PRINT_PAYBACK_RECEIPT,
             Scenario.PRINT_BUY_RECEIPT,
-            Scenario.PRINT_BUYBACK_RECEIPT,
-            Scenario.OPEN_SELL_RECEIPT,
-            Scenario.OPEN_PAYBACK_RECEIPT,
-            Scenario.OPEN_BUY_RECEIPT,
-            Scenario.OPEN_BUYBACK_RECEIPT
+            Scenario.PRINT_BUYBACK_RECEIPT
         )
         private val SUMMARY_SCENARIO = object {
-            val label = "9. Итоговые логи"
+            val label = "5. Итоговые логи"
         }
         private val SHORT_LOG_SCENARIO = object {
-            val label = "10. short_log"
+            val label = "6. short_log"
         }
         private val CLEAR_LOGS_SCENARIO = object {
-            val label = "11. Сбросить логи"
+            val label = "7. Сбросить логи"
         }
     }
 }

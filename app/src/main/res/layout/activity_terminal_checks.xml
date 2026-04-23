@@ -75,34 +75,6 @@
                 android:text="@string/terminal_checks_print_buyback_receipt_button" />
 
             <Button
-                android:id="@+id/openSellReceiptButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/terminal_checks_open_sell_receipt_button" />
-
-            <Button
-                android:id="@+id/openPaybackReceiptButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/terminal_checks_open_payback_receipt_button" />
-
-            <Button
-                android:id="@+id/openBuyReceiptButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/terminal_checks_open_buy_receipt_button" />
-
-            <Button
-                android:id="@+id/openBuybackReceiptButton"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="12dp"
-                android:text="@string/terminal_checks_open_buyback_receipt_button" />
-
-            <Button
                 android:id="@+id/summaryLogsButton"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

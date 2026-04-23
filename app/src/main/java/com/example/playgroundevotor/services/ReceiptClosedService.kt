@@ -24,29 +24,31 @@ class ReceiptClosedService : JobIntentService() {
 
             val event = ReceiptClosedEvent.create(intent.extras) ?: return
 
-
             val receipt: Receipt = ReceiptApi.getReceipt(this, event.receiptUuid) ?: return
             updateShortScenarioResult(receipt)
 
             val message = StringBuilder()
             try {
+                val header = receipt.header
                 message.appendLine("\n----------------------------------")
                 val date = iso8601Formatter.format(Date())
                 message.appendLine("${date}    Чек №${receipt.header.number}")
+                message.appendLine("Readback: ReceiptApi.getReceipt(...).header.receiptFromInternet")
+                message.appendLine("Ожидаемое поведение: receiptFromInternet = true")
+                message.appendLine("Фактическое поведение: receiptFromInternet = ${header.receiptFromInternet}")
+                message.appendLine("paymentPlace = ${header.paymentPlace}")
+                message.appendLine("paymentAddress = ${header.paymentAddress}")
+                message.appendLine()
                 message.append(prettyGson.toJson(receipt).toString())
-
             } catch (e: Exception) {
                 message.appendLine("\n----------------ОШИБКА------------------")
                 prefs.logs += e.localizedMessage
             }
 
             prefs.logs += message
-
-
         } catch (e: Exception) {
             prefs.logs += e.localizedMessage
         }
-
     }
 
     companion object {
@@ -56,6 +58,9 @@ class ReceiptClosedService : JobIntentService() {
     }
 
     private fun updateShortScenarioResult(receipt: Receipt) {
+        // Проверка результата deprecated-сценария выполняется здесь.
+        // Ожидаемое поведение: receiptFromInternet = true
+        // Фактическое поведение: (оставить место для заполнения)
         val header = receipt.header
         val extraJson = runCatching { JSONObject(header.extra ?: "{}") }.getOrElse { JSONObject() }
         val scenarioCode = extraJson.optString("scenario")
@@ -84,6 +89,8 @@ class ReceiptClosedService : JobIntentService() {
         val details = buildString {
             appendLine(if (isPass) "PASS" else "FAIL")
             appendLine()
+            appendLine("Ожидаемое поведение: receiptFromInternet = true")
+            appendLine("Фактическое поведение: receiptFromInternet = ${header.receiptFromInternet}")
             appendLine(if (header.type.name == expectedType) "type=${header.type.name}" else "!!!type=${header.type.name}")
             appendLine(if (header.receiptFromInternet == expectedInternet) "internet=${header.receiptFromInternet}" else "!!!internet=${header.receiptFromInternet}")
             appendLine(if (header.paymentPlace == expectedPaymentPlace) "paymentPlace=${header.paymentPlace}" else "!!!paymentPlace=${header.paymentPlace}")
